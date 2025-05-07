@@ -9,20 +9,39 @@ typedef struct {
     char transit;
 }NURELM;
 int **create_matica(int n){
-    int **matica = malloc(n * sizeof(int*));
+    int **matica_vytv = malloc(n * sizeof(int*));
     for(int i = 0; i < n; i++){
-        matica[i] = calloc(n, sizeof(int));
+        matica_vytv[i] = calloc(n, sizeof(int));
     }
-    return matica;
+    return matica_vytv;
 }
 
-char nurelm_test_transitivity(NURELM *to_test){
+char nurelm_test_transitivity(NURELM *to_test)
+{
+int n = to_test -> size;
+int **R = to_test -> matica;
 
+for (int i = 0; i < n; i++)
+{
+    for(int j = 0; j < n; j++)
+    {
+        for(int k = 0; k < n; k++)
+        {
+            if(R[i][k] && R[j][k])
+            {
+                to_test ->transit = FALSE;
+                return FALSE;
+            }
+        }
+    }
 }
 
-void free_matica(int **matica, int n){
+to_test -> transit = TRUE;
+return TRUE;
+}
+void free_matica(int **matica_vytv, int n){
     for(int i = 0; i < n; i++){
-        free(matica[i]);
+        free(matica_vytv[i]);
     }
-    free(matica);
+    free(matica_vytv);
 }
