@@ -29,7 +29,7 @@ for (int i = 0; i < n; i++)
         {
             for(int k = 0; k < n; k++)
         {
-            if(R[i][k] && R[j][k] && R[i][k])
+            if(R[i][k] && R[j][k] && !R[i][k])
             {
                 to_cheak ->transit = FALSE;
                 return FALSE;
@@ -52,9 +52,10 @@ int main()
     NURELM test;
     test.size = 3;
     test.matica = create_matica(test.size);
+    test.matica[0][0] = 1;
+    test.matica[1][1] = 1;
+    test.matica[2][2] = 1;
     test.matica[0][1] = 1;
-    test.matica[1][2] = 1;
-    test.matica[0][2] = 1;
 
     char result = nurelm_test_transitivity(&test);
     printf("relacia matici\n");
@@ -68,5 +69,5 @@ int main()
     }
     printf("matica je antisymetricka? %s\n", result ? "TRUE" : "FALSE");
     free_matica(test.matica,test.size);
-    
+    return 0;
 }
