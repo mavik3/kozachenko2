@@ -29,7 +29,7 @@ for (int i = 0; i < n; i++)
         {
             for(int k = 0; k < n; k++)
         {
-            if(R[i][k] && R[j][k] && !R[i][k])
+            if(R[i][k] && !R[j][k])
             {
                 to_cheak ->transit = FALSE;
                 return FALSE;
