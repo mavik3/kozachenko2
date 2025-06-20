@@ -26,3 +26,32 @@ NURELM *nurelm_create_Znot_to_Znot(void) {
     rel -> matrix = NULL; 
     return rel;
 }
+void nurelm_destroy(NURELM *rel){
+    if(!rel) return;
+    free(rel -> matrix);
+    free(rel);
+}
+void nurelm_print(NURELM *rel){
+    for(unsigned int i = 0; i < rel -> m; i++){
+        for(unsigned int j = 0; j < rel -> n; j++){
+            printf("%c ",BIND(rel,i ,j) ? '1' : '0');
+        }
+        printf("\n");
+    }
+}
+char nurelm_test_transitivity(NURELM *rel){
+    for(unsigned int i = 0; i < rel -> m; i++){
+        for(unsigned int j = 0; j < rel -> n; j++){
+            if(BIND(rel, i, j)){
+                for(unsigned int k = 0; k < rel -> n; k++){
+                    if(BIND(rel, j, k) && !BIND(rel, i, k)){
+                        rel -> properties = put_trans(rel -> properties, state_no);
+                        return FALSE;
+                }
+            }
+        }
+    }
+}
+rel -> properties = put_trans(rel -> properties, state_yes);
+return TRUE;
+}
