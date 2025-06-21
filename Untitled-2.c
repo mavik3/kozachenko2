@@ -55,3 +55,43 @@ char nurelm_test_transitivity(NURELM *rel){
 rel -> properties = put_trans(rel -> properties, state_yes);
 return TRUE;
 }
+
+NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
+    NURELM *rel = malloc(sizeof(NURELM));
+    if(!rel) return NULL;
+    rel -> m = m;
+    rel -> n = n;
+    rel -> properties = 0;
+    rel -> matrix = malloc(m * n);
+    if(!rel -> matrix) {
+        free(rel);
+        return NULL;
+    }
+    for(unsigned int i = 0; i < m * n;  i++){
+        rel -> matrix[i] = data[i];
+    }
+    return rel;
+}
+
+int main(){
+    char matrix_data[] = {
+        1, 1, 1,
+        0, 1, 1,
+        0, 0, 1
+    };
+    NURELM *rel = nurelm_create_manual(3, 3, matrix_data);
+    if(!rel){
+        printf("chyba vytvorenia relacie.\n");
+        return 1;
+    }
+    printf("matica relacie:\n");
+    nurelm_print(rel);
+    if(nurelm_test_transitivity(rel)){
+        printf("relacia je trasitivna\n");
+    }
+    else{
+        printf("relacia nie je transitivna\n");
+    }
+    nurelm_destroy(rel);
+    getchar();
+}
