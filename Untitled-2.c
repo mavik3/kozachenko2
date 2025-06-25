@@ -17,15 +17,6 @@ typedef struct {
     char *matrix;
 }NURELM;
 
-NURELM *nurelm_create_Znot_to_Znot(void) {
-    NURELM *rel = malloc(sizeof(NURELM));
-    if(!rel) return NULL;
-    rel -> m = 0;
-    rel -> n = 0;
-    rel -> properties = 0;
-    rel -> matrix = NULL; 
-    return rel;
-}
 void nurelm_destroy(NURELM *rel){
     if(!rel) return;
     free(rel -> matrix);
