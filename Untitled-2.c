@@ -1,5 +1,9 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
 #define TRUE 1
 #define FALSE 0
 
@@ -10,6 +14,7 @@
 #define mask_trans 0xC0
 #define set_trans(p) ((p & mask_trans) >> 6)
 #define put_trans(p, s) ((p & ~mask_trans) | ((s & 0x03) << 6)) 
+
 typedef struct {
     unsigned int m;
     unsigned int n;
@@ -22,6 +27,58 @@ void nurelm_destroy(NURELM *rel){
     free(rel -> matrix);
     free(rel);
 }
+
+char nurelm_save(NURELM *rel, char *filename){
+    int fd = open(filename, O_WRONLY | O_CREAT, 0644);
+    if(fd < 0)
+    return 0; 
+    
+    char buffer[128];
+    int len;
+
+    len = snprintf(buffer, sizeof(buffer), "NR1\n");
+    if(write(fd, buffer, len) != len){
+        close(fd);
+        return 0;
+    }
+
+    len = snprintf(buffer, sizeof(buffer), "%u %u\n", rel -> m, rel -> n);
+    if(write(fd, buffer, len) != len){
+        close(fd);
+        return 0;
+    }
+
+    for(unsigned int i = 0; i < rel -> m; i++){
+        for(unsigned int j = 0; j < rel -> n; j++){
+            char c = BIND(rel, i, j) ? '1' : '0';
+            if(write(fd, &c, 1) != 1){
+                close(fd);
+                return 0;
+            } 
+        }
+        char newline = '\n';
+        if(write(fd, &newline, 1) != 1){
+            close(fd);
+            return 0; 
+        }
+    }
+    close(fd);
+    return 1;
+}
+
+NURELM *nurelm_create_Znot_to_Znot(void){
+    NURELM *rel = malloc(sizeof(NURELM));
+    if(!rel)
+    return NULL;
+
+    rel -> m = 0;
+    rel -> n = 0;
+    rel -> properties = 0;
+    rel -> matrix = NULL;
+
+    return rel;
+}
+
 void nurelm_print(NURELM *rel){
     for(unsigned int i = 0; i < rel -> m; i++){
         for(unsigned int j = 0; j < rel -> n; j++){
@@ -38,31 +95,35 @@ char nurelm_test_transitivity(NURELM *rel){
                     if(BIND(rel, j, k) && !BIND(rel, i, k)){
                         rel -> properties = put_trans(rel -> properties, state_no);
                         return FALSE;
+                    }
                 }
             }
         }
     }
-}
-rel -> properties = put_trans(rel -> properties, state_yes);
-return TRUE;
+    rel -> properties = put_trans(rel -> properties, state_yes);
+    return TRUE;
 }
 
 NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
+
     NURELM *rel = malloc(sizeof(NURELM));
     if(!rel) return NULL;
+
     rel -> m = m;
     rel -> n = n;
     rel -> properties = 0;
     rel -> matrix = malloc(m * n);
+
     if(!rel -> matrix) {
         free(rel);
         return NULL;
     }
-    for(unsigned int i = 0; i < m * n;  i++){
+    for(unsigned int i = 0; i < m * n;  i++)
         rel -> matrix[i] = data[i];
-    }
+    
     return rel;
 }
+
 
 int main(){
     char matrix_data[] = {
@@ -75,14 +136,18 @@ int main(){
         printf("chyba vytvorenia relacie.\n");
         return 1;
     }
+
     printf("matica relacie:\n");
     nurelm_print(rel);
+
     if(nurelm_test_transitivity(rel)){
         printf("relacia je trasitivna\n");
     }
+
     else{
         printf("relacia nie je transitivna\n");
     }
+
     nurelm_destroy(rel);
     getchar();
 }
