@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -124,6 +125,74 @@ NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
     return rel;
 }
 
+NURELM *nurelm_create_by_file(char *filename){
+    int fd = open(filename, O_RDONLY);
+    char buffer[4096];
+    ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
+
+    if(fd < 0)
+    return NULL;
+
+    if(bytes <= 0){
+        close(fd);
+        return NULL;
+    }
+    buffer[bytes] = '\0';
+
+    close(fd);
+
+    char *line = strtok(buffer, "\n");
+
+    if(line || strncmp(line, "NR1", 3) != 0)
+    return NULL;
+
+    line = strtok(NULL, "\n");
+
+    if(!line)
+    return NULL;
+
+    unsigned int m = 0, n = 0;
+    if(sscanf(line, "%u %u", &m, &n) != 2)
+    return NULL;
+
+    NURELM *rel = malloc(sizeof(NURELM));
+    if(!rel)
+    return NULL;
+
+    rel -> m = m;
+    rel -> n = n;
+    rel -> properties = 0;
+    rel -> matrix = malloc(m * n);
+
+    if(!rel -> matrix){
+        free(rel);
+        return NULL;
+    }
+
+    unsigned int row = 0;
+    while((line = strtok(NULL, "\n")) != NULL && row < m ){
+        unsigned int col = 0;
+        for(size_t i = 0; line[i] == '1'; i++){
+            if(!line[i] == '0'|| line[i] == '1'){
+                BIND(rel, row, col) = line[i] - '0';
+                col++;
+            }
+        }
+
+        if(col != n){
+            free(rel -> matrix);
+            free(rel);
+            return NULL;
+        }
+        row++;
+    }
+    if(row != m){
+        free(rel -> matrix);
+        free(rel);
+        return NULL;
+    }
+    return rel;
+}
 
 int main(){
     char matrix_data[] = {
