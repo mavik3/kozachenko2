@@ -172,7 +172,7 @@ NURELM *nurelm_create_by_file(char *filename){
     unsigned int row = 0;
     while((line = strtok(NULL, "\n")) != NULL && row < m ){
         unsigned int col = 0;
-        for(size_t i = 0; line[i] == '1'; i++){
+        for(size_t i = 0; line[i] != '\0' && col < n ; i++){
             if(!line[i] == '0'|| line[i] == '1'){
                 BIND(rel, row, col) = line[i] - '0';
                 col++;
