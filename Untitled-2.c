@@ -30,43 +30,35 @@ void nurelm_destroy(NURELM *rel){
 }
 
 char nurelm_save(NURELM *rel, char *filename){
-    int fd = open(filename, O_WRONLY | O_CREAT, 0644);
-    if(fd < 0)
-    return 0; 
-    
-    char buffer[128];
-    int len;
+    FILE *file = fopen(filename, "w");
+    if(!file)
+    return 0;
 
-    len = snprintf(buffer, sizeof(buffer), "NR1\n");
-    if(write(fd, buffer, len) != len){
-        close(fd);
+    if(fprintf(file, "NR1") < 0){
+        fclose(file);
         return 0;
     }
-
-    len = snprintf(buffer, sizeof(buffer), "%u %u\n", rel -> m, rel -> n);
-    if(write(fd, buffer, len) != len){
-        close(fd);
+    if(fprintf(file, "%u %u\n", rel -> m, rel -> n) <0){
+        fclose(file);
         return 0;
-    }
-
-    for(unsigned int i = 0; i < rel -> m; i++){
-        for(unsigned int j = 0; j < rel -> n; j++){
-            char c = BIND(rel, i, j) ? '1' : '0';
-            if(write(fd, &c, 1) != 1){
-                close(fd);
+        for(unsigned int i = 0; i < rel -> m; i++){
+            for(unsigned int j = 0; j < rel -> n; j++){
+                char c = BIND(rel, i, j) ? '1' : '0';
+                if(fputc(c, file) == EOF){
+                    fclose(file);
+                    return 0;
+                }
+            }
+            if(fputc('\n', file) == EOF){
+                fclose(file);
                 return 0;
-            } 
+            }
         }
-        char newline = '\n';
-        if(write(fd, &newline, 1) != 1){
-            close(fd);
-            return 0; 
-        }
+        fclose(file);
+        return 1;
     }
-    close(fd);
-    return 1;
-}
 
+}
 NURELM *nurelm_create_Znot_to_Znot(void){
     NURELM *rel = malloc(sizeof(NURELM));
     if(!rel)
@@ -126,72 +118,6 @@ NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
 }
 
 NURELM *nurelm_create_by_file(char *filename){
-    int fd = open(filename, O_RDONLY);
-    char buffer[4096];
-    ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
-
-    if(fd < 0)
-    return NULL;
-
-    if(bytes <= 0){
-        close(fd);
-        return NULL;
-    }
-    buffer[bytes] = '\0';
-
-    close(fd);
-
-    char *line = strtok(buffer, "\n");
-
-    if(line || strncmp(line, "NR1", 3) != 0)
-    return NULL;
-
-    line = strtok(NULL, "\n");
-
-    if(!line)
-    return NULL;
-
-    unsigned int m = 0, n = 0;
-    if(sscanf(line, "%u %u", &m, &n) != 2)
-    return NULL;
-
-    NURELM *rel = malloc(sizeof(NURELM));
-    if(!rel)
-    return NULL;
-
-    rel -> m = m;
-    rel -> n = n;
-    rel -> properties = 0;
-    rel -> matrix = malloc(m * n);
-
-    if(!rel -> matrix){
-        free(rel);
-        return NULL;
-    }
-
-    unsigned int row = 0;
-    while((line = strtok(NULL, "\n")) != NULL && row < m ){
-        unsigned int col = 0;
-        for(size_t i = 0; line[i] != '\0' && col < n ; i++){
-            if(!line[i] == '0'|| line[i] == '1'){
-                BIND(rel, row, col) = line[i] - '0';
-                col++;
-            }
-        }
-
-        if(col != n){
-            free(rel -> matrix);
-            free(rel);
-            return NULL;
-        }
-        row++;
-    }
-    if(row != m){
-        free(rel -> matrix);
-        free(rel);
-        return NULL;
-    }
-    return rel;
 }
 
 int main(){
