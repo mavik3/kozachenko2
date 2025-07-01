@@ -118,6 +118,62 @@ NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
 }
 
 NURELM *nurelm_create_by_file(char *filename){
+    FILE *file = fopen(filename, "r");
+    if(!file)
+    return NULL;
+
+    char line[1024];
+    if(!fgets(line,sizeof(line), file)){
+        fclose(file);
+        return NULL;
+    }
+    if(line[0] != 'N' || line[1] != 'R' || line[2] != '1'){
+        fclose(file);
+        return NULL;
+    }
+
+    unsigned int m = 0, n = 0;
+    if(sscanf(line, "%u %u", &m, &n) != 2 || m == 0 || n ==0){
+        fclose(file);
+        return NULL;
+    }
+
+    NURELM *rel = malloc(sizeof(NURELM));
+    if(!rel){
+        fclose(file);
+        return NULL;
+    }
+
+    rel -> m = m;
+    rel -> n = n;
+    rel -> properties = 0;
+    rel -> matrix = malloc(m * n);
+    if(!rel -> matrix){
+        free(rel);
+        fclose(file);
+        return NULL;
+    }
+
+    for (unsigned int row = 0; row < m; row++) {
+        if (!fgets(line, sizeof(line), file)) {
+            free(rel->matrix);
+            free(rel);
+            fclose(file);
+            return NULL;
+        }
+    
+        for (unsigned int col = 0; col < n; col++){
+            if (line[col] != '0' && line[col] != '1') {
+                free(rel->matrix);
+                free(rel);
+                fclose(file);
+                return NULL;
+            }
+            BIND(rel, row, col) = line[col] -'0';
+        }    
+    }
+    fclose(file);
+    return rel;
 }
 
 int main(){
