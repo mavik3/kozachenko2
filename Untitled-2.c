@@ -34,31 +34,34 @@ char nurelm_save(NURELM *rel, char *filename){
     if(!file)
     return 0;
 
-    if(fprintf(file, "NR1") < 0){
+    if(fprintf(file, "NR1\n") < 0){
         fclose(file);
         return 0;
     }
+    
     if(fprintf(file, "%u %u\n", rel -> m, rel -> n) <0){
         fclose(file);
         return 0;
-        for(unsigned int i = 0; i < rel -> m; i++){
-            for(unsigned int j = 0; j < rel -> n; j++){
-                char c = BIND(rel, i, j) ? '1' : '0';
-                if(fputc(c, file) == EOF){
-                    fclose(file);
-                    return 0;
-                }
-            }
-            if(fputc('\n', file) == EOF){
+    }
+
+    for(unsigned int i = 0; i < rel -> m; i++){
+        for(unsigned int j = 0; j < rel -> n; j++){
+            char c = BIND(rel, i, j) ? '1' : '0';
+            if(fputc(c, file) == EOF){
                 fclose(file);
                 return 0;
             }
         }
-        fclose(file);
-        return 1;
+        if(fputc('\n', file) == EOF){
+            fclose(file);
+            return 0;
+        }
     }
 
+    fclose(file);
+    return 1;
 }
+
 NURELM *nurelm_create_Znot_to_Znot(void){
     NURELM *rel = malloc(sizeof(NURELM));
     if(!rel)
@@ -119,29 +122,44 @@ NURELM *nurelm_create_manual(unsigned int m, unsigned int n, const char *data){
 
 NURELM *nurelm_create_by_file(char *filename){
     FILE *file = fopen(filename, "r");
-    if(!file)
-    return NULL;
-
+    if(!file){
+        printf("2");
+        return NULL;
+        
+    }
     char line[1024];
-    if(!fgets(line,sizeof(line), file)){
+    if(!fgets(line, sizeof(line), file)){
         fclose(file);
+        printf("3");
         return NULL;
     }
+
     if(line[0] != 'N' || line[1] != 'R' || line[2] != '1'){
         fclose(file);
+        printf("4");
         return NULL;
     }
 
+    /*
+    for(int i=0; i<1024; i++)
+        printf("%c",line[i]);
+    */
+    
     unsigned int m = 0, n = 0;
-    if(sscanf(line, "%u %u", &m, &n) != 2 || m == 0 || n ==0){
+    if(fscanf(file, "%u %u", &m, &n) != 2 || m == 0 || n == 0){
         fclose(file);
+        printf("5 %u %u", m, n);
         return NULL;
     }
+
+    printf("DIM: %u %u\n", m, n);
 
     NURELM *rel = malloc(sizeof(NURELM));
     if(!rel){
         fclose(file);
+        printf("6");
         return NULL;
+        
     }
 
     rel -> m = m;
@@ -151,14 +169,16 @@ NURELM *nurelm_create_by_file(char *filename){
     if(!rel -> matrix){
         free(rel);
         fclose(file);
+        printf("7");
         return NULL;
     }
 
     for (unsigned int row = 0; row < m; row++) {
-        if (!fgets(line, sizeof(line), file)) {
+        if (!fscanf(file, "%u",&line[row])) {
             free(rel->matrix);
             free(rel);
             fclose(file);
+            printf("8");
             return NULL;
         }
     
@@ -167,6 +187,7 @@ NURELM *nurelm_create_by_file(char *filename){
                 free(rel->matrix);
                 free(rel);
                 fclose(file);
+                printf("9");
                 return NULL;
             }
             BIND(rel, row, col) = line[col] -'0';
@@ -183,6 +204,8 @@ int main(){
         0, 0, 1
     };
     NURELM *rel = nurelm_create_manual(3, 3, matrix_data);
+    NURELM *newrel;
+
     if(!rel){
         printf("chyba vytvorenia relacie.\n");
         return 1;
@@ -199,6 +222,12 @@ int main(){
         printf("relacia nie je transitivna\n");
     }
 
+    nurelm_save(rel, "test.rel");
+    newrel = nurelm_create_by_file("test.rel");
+
+    printf("%p", newrel);
+//    nurelm_print(newrel);
+
     nurelm_destroy(rel);
-    getchar();
+//    getchar();
 }
